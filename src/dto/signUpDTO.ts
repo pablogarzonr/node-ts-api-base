@@ -7,4 +7,7 @@ export class SignUpDTO extends BaseUserDTO {
 
   @IsString()
   lastName?: string;
+
+  @IsString()
+  gender?: string;  
 }
