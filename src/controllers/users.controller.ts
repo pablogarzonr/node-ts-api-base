@@ -9,7 +9,8 @@ import {
   Authorized,
   BadRequestError
 } from 'routing-controllers';
-import { InsertResult, UpdateResult, DeleteResult } from 'typeorm';
+import omit from 'lodash/omit';
+import { UpdateResult, DeleteResult } from 'typeorm';
 import { Service } from 'typedi';
 import { User } from '@entities/user.entity';
 import { UsersService } from '@services/users.service';
@@ -34,11 +35,12 @@ export class UserController {
   }
 
   @Post()
-  async post(@Body() userDTO: SignUpDTO): Promise<InsertResult> {
+  async post(@Body() userDTO: SignUpDTO): Promise<any> {
     try {
-      return await this.usersService.createUser(
+      const user = await this.usersService.createUser(
         EntityMapper.mapTo(User, userDTO)
       );
+      return omit(user, ['password']);
     } catch (error: any) {
       throw new BadRequestError(
         error.detail ?? error.message ?? ErrorsMessages.INTERNAL_SERVER_ERROR

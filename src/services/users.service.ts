@@ -2,28 +2,14 @@ import { Service } from 'typedi';
 import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { getRepository } from 'typeorm';
 import { User } from '@entities/user.entity';
-import { JWTService } from '@services/jwt.service';
 
 @Service()
 export class UsersService {
-  constructor(private readonly jwtService: JWTService) {}
 
   private readonly userRepository = getRepository<User>(User);
 
   comparePassword(password: string, userPassword: string): boolean {
     return compareSync(password, userPassword);
-  }
-
-  generateToken(user: User) {
-    return this.jwtService.createJWT(user);
-  }
-
-  hashPassword(password: string): string {
-    return hashSync(password, genSaltSync());
-  }
-
-  hashUserPassword(user: User): void {
-    user.password = this.hashPassword(user.password);
   }
 
   listUsers() {
@@ -35,8 +21,9 @@ export class UsersService {
   }
 
   createUser(user: User) {
-    this.hashUserPassword(user);
-    return this.userRepository.insert(user);
+    //hash user password
+    user.password = hashSync(user.password, genSaltSync());
+    return this.userRepository.save(user);
   }
 
   editUser(id: number, user: User) {

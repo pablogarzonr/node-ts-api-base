@@ -1,9 +1,9 @@
 import { ErrorsMessages } from '@constants/errorMessages';
 import { Service } from 'typedi';
-import { getRepository } from 'typeorm';
 import { User } from '@entities/user.entity';
 import { UsersService } from '@services/users.service';
 import { RedisService } from '@services/redis.service';
+import { JWTService } from '@services/jwt.service';
 import { AuthInterface } from '@interfaces';
 import { DatabaseError } from '@exception/database.error';
 import { RedisError } from '@exception/redis.error';
@@ -15,15 +15,13 @@ import { BaseUserDTO } from '@dto/baseUserDTO';
 export class SessionService {
   constructor(
     private readonly userService: UsersService,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
+    private readonly jwtService: JWTService
   ) {}
 
-  private readonly userRepository = getRepository<User>(User);
-
   async signUp(user: User) {
-    this.userService.hashUserPassword(user);
     try {
-      return await this.userRepository.save(user);
+      return await this.userService.createUser(user);
     } catch (error) {
       throw new DatabaseError(ErrorsMessages.USER_ALREADY_EXISTS);
     }
@@ -36,25 +34,19 @@ export class SessionService {
         .addSelect('user.password')
         .where({ email: signInDTO.email })
         .getOneOrFail();
+      
+      if (
+        !this.userService.comparePassword(signInDTO.password, user.password)
+      ) {
+        throw 'invalid credentials';
+      }
     } catch (error) {
       throw new HttpError(
         HttpStatusCode.UNAUTHORIZED,
         ErrorsMessages.INVALID_CREDENTIALS
       );
     }
-
-    if (
-      !this.userService.comparePassword(signInDTO.password, user.password)
-    ) {
-      throw new HttpError(
-        HttpStatusCode.UNAUTHORIZED,
-        ErrorsMessages.INVALID_CREDENTIALS
-      );
-    }
-
-    const token = this.userService.generateToken(user);
-    this.userService.hashUserPassword(user);
-    return token;
+    return this.jwtService.createJWT(user);
   }
 
   logOut(input: AuthInterface.ITokenToBlacklistInput): Promise<number> {
