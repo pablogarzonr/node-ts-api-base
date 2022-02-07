@@ -52,7 +52,7 @@ export class UserController {
     @Body() userDTO: SignUpDTO
   ): Promise<UpdateResult> {
     const user: User = EntityMapper.mapTo(User, userDTO);
-    return this.usersService.editUser({ id, user });
+    return this.usersService.editUser(id, user);
   }
 
   @Delete('/:id')

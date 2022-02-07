@@ -9,6 +9,7 @@ import { DatabaseError } from '@exception/database.error';
 import { RedisError } from '@exception/redis.error';
 import { HttpError } from 'routing-controllers';
 import { HttpStatusCode } from '@constants/httpStatusCode';
+import { BaseUserDTO } from '@dto/baseUserDTO';
 
 @Service()
 export class SessionService {
@@ -28,14 +29,12 @@ export class SessionService {
     }
   }
 
-  async signIn(input: AuthInterface.ISignInInput) {
-    const { email, password } = input;
-
+  async signIn(signInDTO: BaseUserDTO) {
     let user: User;
     try {
       user = await User.createQueryBuilder('user')
         .addSelect('user.password')
-        .where({ email })
+        .where({ email: signInDTO.email })
         .getOneOrFail();
     } catch (error) {
       throw new HttpError(
@@ -45,10 +44,7 @@ export class SessionService {
     }
 
     if (
-      !this.userService.comparePassword({
-        password,
-        userPassword: user.password
-      })
+      !this.userService.comparePassword(signInDTO.password, user.password)
     ) {
       throw new HttpError(
         HttpStatusCode.UNAUTHORIZED,

@@ -3,7 +3,6 @@ import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { getRepository } from 'typeorm';
 import { User } from '@entities/user.entity';
 import { JWTService } from '@services/jwt.service';
-import { AuthInterface, UserInterface } from '@interfaces';
 
 @Service()
 export class UsersService {
@@ -11,8 +10,7 @@ export class UsersService {
 
   private readonly userRepository = getRepository<User>(User);
 
-  comparePassword(input: AuthInterface.IComparePasswordInput): boolean {
-    const { password, userPassword } = input;
+  comparePassword(password: string, userPassword: string): boolean {
     return compareSync(password, userPassword);
   }
 
@@ -41,8 +39,7 @@ export class UsersService {
     return this.userRepository.insert(user);
   }
 
-  editUser(input: UserInterface.IEditUserInput) {
-    const { id, user } = input;
+  editUser(id: number, user: User) {
     return this.userRepository.update(id, user);
   }
 

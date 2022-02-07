@@ -30,17 +30,12 @@ export class AuthorizationService {
         token = token.replace('Bearer ', '');
       }
       const payload = await jwt.verifyJWT(token);
-      const {
-        data: { email }
-      } = payload;
       const tokenIsBlacklisted: number = await redis.isMemberOfSet({
-        email,
+        email: payload.data.email,
         token
       });
-      if (!!tokenIsBlacklisted) {
-        return false;
-      }
-      return true;
+      
+      return !(!!tokenIsBlacklisted);
     } catch (error) {
       // Here we should do something with the error like loggin
       return false;

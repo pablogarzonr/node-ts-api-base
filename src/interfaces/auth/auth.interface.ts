@@ -1,13 +1,3 @@
-export interface ISignInInput {
-  email: string;
-  password: string;
-}
-
-export interface IComparePasswordInput {
-  password: string;
-  userPassword: string;
-}
-
 export interface ITokenToBlacklistInput {
   email: string;
   token: string;
