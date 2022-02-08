@@ -16,6 +16,7 @@ import { User } from '@entities/user.entity';
 import { UsersService } from '@services/users.service';
 import { ErrorsMessages } from '../constants/errorMessages';
 import { SignUpDTO } from '@dto/signUpDTO';
+import { AuthInterface } from '@interfaces';
 import { EntityMapper } from '@clients/mapper/entityMapper.service';
 
 @JsonController('/users')
@@ -35,7 +36,7 @@ export class UserController {
   }
 
   @Post()
-  async post(@Body() userDTO: SignUpDTO): Promise<any> {
+  async post(@Body() userDTO: SignUpDTO): Promise<AuthInterface.IUserResponse> {
     try {
       const user = await this.usersService.createUser(
         EntityMapper.mapTo(User, userDTO)

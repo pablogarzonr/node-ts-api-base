@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { compareSync, genSaltSync, hashSync } from 'bcrypt';
+import { compare, genSalt, hash } from 'bcrypt';
 import { getRepository } from 'typeorm';
 import { User } from '@entities/user.entity';
 
@@ -8,8 +8,8 @@ export class UsersService {
 
   private readonly userRepository = getRepository<User>(User);
 
-  comparePassword(password: string, userPassword: string): boolean {
-    return compareSync(password, userPassword);
+  async comparePassword(password: string, userPassword: string): Promise<boolean> {
+    return compare(password, userPassword);
   }
 
   listUsers() {
@@ -21,15 +21,16 @@ export class UsersService {
   }
 
   async findUserByEmail(email: string) {
-    return await User.createQueryBuilder('user')
+    return User.createQueryBuilder('user')
     .addSelect('user.password')
     .where({ email })
     .getOneOrFail()
   }
 
-  createUser(user: User) {
+  async createUser(user: User) {
     //hash user password
-    user.password = hashSync(user.password, genSaltSync());
+    const salt = await genSalt(10);
+    user.password = await hash(user.password, salt);
     return this.userRepository.save(user);
   }
 

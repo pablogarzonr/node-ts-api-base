@@ -44,11 +44,11 @@ export class AuthorizationService {
       if (!_roles.length) return true;
       // if not, continue checking if the user's role is in the list
       const user = await userService.findUserByEmail(payload.data.email);
-      const roleF = _roles.find(role =>
+      const roleAuthorized = _roles.find(role =>
         !!user.role ? user.role === role : role === Role.USER
       );
       
-      return !!roleF;
+      return !!roleAuthorized;
     } catch (error) {
       // Here we should do something with the error like loggin
       return false;

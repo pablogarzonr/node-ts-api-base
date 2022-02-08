@@ -21,7 +21,7 @@ export class SessionService {
 
   async signUp(user: User) {
     try {
-      return await this.userService.createUser(user);
+      return this.userService.createUser(user);
     } catch (error) {
       throw new DatabaseError(ErrorsMessages.USER_ALREADY_EXISTS);
     }
@@ -31,7 +31,6 @@ export class SessionService {
     let user: User;
     try {
       user = await this.userService.findUserByEmail(signInDTO.email);
-      console.log(user);
       if (
         !this.userService.comparePassword(signInDTO.password, user.password)
       ) {
