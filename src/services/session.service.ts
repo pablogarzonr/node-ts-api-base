@@ -30,11 +30,8 @@ export class SessionService {
   async signIn(signInDTO: BaseUserDTO) {
     let user: User;
     try {
-      user = await User.createQueryBuilder('user')
-        .addSelect('user.password')
-        .where({ email: signInDTO.email })
-        .getOneOrFail();
-      
+      user = await this.userService.findUserByEmail(signInDTO.email);
+      console.log(user);
       if (
         !this.userService.comparePassword(signInDTO.password, user.password)
       ) {

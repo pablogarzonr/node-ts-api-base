@@ -1,6 +1,7 @@
 import { Column, Entity, Index } from 'typeorm';
 import { Base } from './base.entity';
 import {Gender} from './gender.enum';
+import {Role} from './role.enum';
 
 @Entity()
 export class User extends Base {
@@ -19,4 +20,7 @@ export class User extends Base {
 
   @Column({ type: "enum", enum:Gender, nullable: true })
   gender?: Gender;
+
+  @Column({ type: "enum", enum:Role, nullable: true })
+  role?: Role;
 }

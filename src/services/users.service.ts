@@ -20,6 +20,13 @@ export class UsersService {
     return this.userRepository.findOne(id);
   }
 
+  async findUserByEmail(email: string) {
+    return await User.createQueryBuilder('user')
+    .addSelect('user.password')
+    .where({ email })
+    .getOneOrFail()
+  }
+
   createUser(user: User) {
     //hash user password
     user.password = hashSync(user.password, genSaltSync());
