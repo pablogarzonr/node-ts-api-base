@@ -1,64 +1,49 @@
 import { ErrorsMessages } from '@constants/errorMessages';
 import { Service } from 'typedi';
-import { getRepository } from 'typeorm';
 import { User } from '@entities/user.entity';
 import { UsersService } from '@services/users.service';
 import { RedisService } from '@services/redis.service';
+import { JWTService } from '@services/jwt.service';
 import { AuthInterface } from '@interfaces';
 import { DatabaseError } from '@exception/database.error';
 import { RedisError } from '@exception/redis.error';
 import { HttpError } from 'routing-controllers';
 import { HttpStatusCode } from '@constants/httpStatusCode';
+import { BaseUserDTO } from '@dto/baseUserDTO';
 
 @Service()
 export class SessionService {
   constructor(
     private readonly userService: UsersService,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
+    private readonly jwtService: JWTService
   ) {}
 
-  private readonly userRepository = getRepository<User>(User);
-
   async signUp(user: User) {
-    this.userService.hashUserPassword(user);
     try {
-      return await this.userRepository.save(user);
+      const registeredUser  = this.userService.createUser(user);
+      return registeredUser;
     } catch (error) {
       throw new DatabaseError(ErrorsMessages.USER_ALREADY_EXISTS);
     }
   }
 
-  async signIn(input: AuthInterface.ISignInInput) {
-    const { email, password } = input;
-
+  async signIn(signInDTO: BaseUserDTO) {
     let user: User;
     try {
-      user = await User.createQueryBuilder('user')
-        .addSelect('user.password')
-        .where({ email })
-        .getOneOrFail();
+      user = await this.userService.findUserByEmail(signInDTO.email);
+      if (
+        !this.userService.comparePassword(signInDTO.password, user.password)
+      ) {
+        throw 'invalid credentials';
+      }
     } catch (error) {
       throw new HttpError(
         HttpStatusCode.UNAUTHORIZED,
         ErrorsMessages.INVALID_CREDENTIALS
       );
     }
-
-    if (
-      !this.userService.comparePassword({
-        password,
-        userPassword: user.password
-      })
-    ) {
-      throw new HttpError(
-        HttpStatusCode.UNAUTHORIZED,
-        ErrorsMessages.INVALID_CREDENTIALS
-      );
-    }
-
-    const token = this.userService.generateToken(user);
-    this.userService.hashUserPassword(user);
-    return token;
+    return this.jwtService.createJWT(user);
   }
 
   logOut(input: AuthInterface.ITokenToBlacklistInput): Promise<number> {

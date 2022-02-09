@@ -1,11 +1,15 @@
-export interface ISignInInput {
-  email: string;
-  password: string;
-}
+export interface IUserResponse {
+  id: number;
 
-export interface IComparePasswordInput {
-  password: string;
-  userPassword: string;
+  email: string;
+
+  firstName?: string;
+
+  lastName?: string;
+
+  gender?: string;
+
+  role?: string;
 }
 
 export interface ITokenToBlacklistInput {

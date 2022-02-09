@@ -9,12 +9,14 @@ import {
   Authorized,
   BadRequestError
 } from 'routing-controllers';
-import { InsertResult, UpdateResult, DeleteResult } from 'typeorm';
+import omit from 'lodash/omit';
+import { UpdateResult, DeleteResult } from 'typeorm';
 import { Service } from 'typedi';
 import { User } from '@entities/user.entity';
 import { UsersService } from '@services/users.service';
 import { ErrorsMessages } from '../constants/errorMessages';
 import { SignUpDTO } from '@dto/signUpDTO';
+import { AuthInterface } from '@interfaces';
 import { EntityMapper } from '@clients/mapper/entityMapper.service';
 
 @JsonController('/users')
@@ -34,11 +36,12 @@ export class UserController {
   }
 
   @Post()
-  async post(@Body() userDTO: SignUpDTO): Promise<InsertResult> {
+  async post(@Body() userDTO: SignUpDTO): Promise<AuthInterface.IUserResponse> {
     try {
-      return await this.usersService.createUser(
+      const user = await this.usersService.createUser(
         EntityMapper.mapTo(User, userDTO)
       );
+      return omit(user, ['password']);
     } catch (error: any) {
       throw new BadRequestError(
         error.detail ?? error.message ?? ErrorsMessages.INTERNAL_SERVER_ERROR
@@ -52,7 +55,7 @@ export class UserController {
     @Body() userDTO: SignUpDTO
   ): Promise<UpdateResult> {
     const user: User = EntityMapper.mapTo(User, userDTO);
-    return this.usersService.editUser({ id, user });
+    return this.usersService.editUser(id, user);
   }
 
   @Delete('/:id')
