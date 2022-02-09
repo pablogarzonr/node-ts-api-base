@@ -21,7 +21,8 @@ export class SessionService {
 
   async signUp(user: User) {
     try {
-      return this.userService.createUser(user);
+      const registeredUser  = this.userService.createUser(user);
+      return registeredUser;
     } catch (error) {
       throw new DatabaseError(ErrorsMessages.USER_ALREADY_EXISTS);
     }
