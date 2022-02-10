@@ -42,7 +42,7 @@ export class AuthController {
     @Res() response: Response
   ) {
     
-    const result: number | undefined = await this.sessionService.verifyUser(token);
+    const result: boolean | undefined = await this.sessionService.verifyUser(token);
     
     if (!result) {      
       response.send(new HttpError(

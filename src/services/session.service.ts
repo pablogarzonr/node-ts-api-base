@@ -11,6 +11,7 @@ import { DatabaseError } from '@exception/database.error';
 import { RedisError } from '@exception/redis.error';
 import { HttpError, useExpressServer } from 'routing-controllers';
 import { BaseUserDTO } from '@dto/baseUserDTO';
+import { APPLICATION_EMAIL } from '@config';
 
 @Service()
 export class SessionService {
@@ -25,7 +26,7 @@ export class SessionService {
       user.isVerified = false;
       const registeredUser  = await this.userService.createUser(user);
 
-      this.sendVerificationToken(registeredUser);
+      this.sendVerificationToken({userId: registeredUser.id, email: registeredUser.email});
 
       return registeredUser;
     } catch (error) {
@@ -33,18 +34,16 @@ export class SessionService {
     }
   }
 
-  async sendVerificationToken(user: User) {
-    const tokenData: AuthInterface.ITokenDataInput = { userId: user.id, email: user.email, expiration: '24hs'};
+  async sendVerificationToken(tokenData: AuthInterface.ITokenDataInput) {
       const token = await this.jwtService.createJWT(tokenData);
-      
       this.redisService.addTokenToVerificationList({
-        email: user.email,
+        email: tokenData.email,
         token
       });
       
       EmailService.sendEmail({
-        from: 'string',
-        to: user.email,
+        from: APPLICATION_EMAIL as string,
+        to: tokenData.email,
         subject: 'Verify your MVD account',
         text: token
       });
@@ -52,6 +51,7 @@ export class SessionService {
 
   async verifyUser(token: string) {
     try {
+      //decode token and get email
       const tokenDecoded = await this.jwtService.decodeJWT(token);
       if (tokenDecoded === null) {
         throw new HttpError(
@@ -59,9 +59,20 @@ export class SessionService {
           'Invalid Token'
         );
       };
-      
       const email: string = (tokenDecoded as AuthInterface.ITokenPayload).data.email;
+      const id: number = (tokenDecoded as AuthInterface.ITokenPayload).data.userId;
 
+      //check if email is in list
+      const isValidEmailToVerify = await this.redisService.get(email);
+      if (!isValidEmailToVerify) {
+        this.sendVerificationToken({userId: id, email});
+        throw new HttpError(
+          HttpStatusCode.UNAUTHORIZED,
+          'A new link has been sent to your email'
+        );
+      }
+
+      //check if user with email exists on database
       const user = await this.userService.findUserByEmail(email);
       if (!user && !!(user as User).isVerified) {
         throw new HttpError(
@@ -69,21 +80,13 @@ export class SessionService {
           'Invalid Token'
         );
       }
-
-      const isValidToken = await this.redisService.get(email);
-      if (!isValidToken) {
-        this.sendVerificationToken(user);
-        throw new HttpError(
-          HttpStatusCode.UNAUTHORIZED,
-          'A new link has been sent to your email'
-        );
-      }
       
+      //update user as verified
       user.isVerified = true;
       this.redisService.removeVerificationToken(user.email);
       this.userService.editUser(user.id, user);
 
-      return 1;
+      return true;
     } catch (error) {
       throw error;
     }
