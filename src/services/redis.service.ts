@@ -4,62 +4,27 @@ import { Service } from 'typedi';
 
 @Service()
 export class RedisService {
-  addTokenToBlacklist(
+  
+  async addTokenToBlacklist(
     input: AuthInterface.ITokenToBlacklistInput
-  ): Promise<number> {
-    return new Promise((res, rej) => {
-      const { email, token } = input;
-      return redisClient.sadd(email, token, (err, result) => {
-        if (err) {
-          rej(err);
-        }
-        res(result);
-      });
-    });
+  ) {
+    const { email, token } = input;
+    return redisClient.sadd(email, token);
   }
 
-  addTokenToVerificationList(input: AuthInterface.ITokenToBlacklistInput): Promise<number> {
-    return new Promise((res, rej) => {
-      return redisClient.set(input.email, input.token, 'EX', 24*60*60,  function(err, result) {
-        if (err) {
-          rej(err);
-        }
-        res(result);
-      });
-    });
+  async addTokenToVerificationList(input: AuthInterface.ITokenToBlacklistInput) {
+    return redisClient.set(input.email, input.token, 'EX', 24*60*60);
   }
 
-  get(email: string): Promise<string> {
-    return new Promise((res, rej) => {
-      return redisClient.get(email, function(err, result) {
-        if (err) {
-          rej(err);
-        }
-        res(result);
-      }); 
-    });
+  async get(email: String) {
+    return redisClient.get(email);
+  }
+  
+  async del(email: string) {
+    return redisClient.del(email);
   }
 
-  removeVerificationToken(email: string): Promise<string> {
-    return new Promise((res, rej) => {
-      return redisClient.del(email, function(err, result) {
-        if (err) {
-          rej(err);
-        }
-        res(result);
-      }); 
-    });
-  }
-
-  isMemberOfSet(input: AuthInterface.ITokenToBlacklistInput): Promise<number> {
-    return new Promise((res, rej) => {
-      const { email, token } = input;
-      redisClient.sismember(email, token, (err, result) => {
-        if (err) {
-          rej(err);
-        }
-        res(result);
-      });
-    });
+  async isMemberOfSet(input: AuthInterface.ITokenToBlacklistInput) {
+    return redisClient.sismember(input.email, input.token);
   }
 }

@@ -50,10 +50,9 @@ export class SessionService {
   }
 
   async verifyUser(token: string) {
-    try {
       //decode token and get email
       const tokenDecoded = await this.jwtService.decodeJWT(token);
-      if (tokenDecoded === null) {
+      if (!tokenDecoded) {
         throw new HttpError(
           HttpStatusCode.UNAUTHORIZED,
           'Invalid Token'
@@ -81,15 +80,27 @@ export class SessionService {
         );
       }
       
+      try {
+        await this.redisService.del(user.email);
+      } catch(e) {
+        throw new HttpError(
+          HttpStatusCode.UNAUTHORIZED,
+          'Invalid Token'
+        );
+      }
+      
       //update user as verified
-      user.isVerified = true;
-      this.redisService.removeVerificationToken(user.email);
-      this.userService.editUser(user.id, user);
+      try {
+        user.isVerified = true;
+        this.userService.editUser(user.id, user);
+      } catch(e) {
+        throw new HttpError(
+          HttpStatusCode.UNAUTHORIZED,
+          'Error verifying email'
+        );
+      }
 
       return true;
-    } catch (error) {
-      throw error;
-    }
   }
 
   async signIn(signInDTO: BaseUserDTO) {
