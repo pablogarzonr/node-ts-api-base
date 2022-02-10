@@ -27,3 +27,9 @@ type TokenPayloadData = {
   userId: number;
   email: string;
 };
+
+export interface ITokenDataInput {
+  userId: number;
+  email: string;
+  expiration?: string;
+};
