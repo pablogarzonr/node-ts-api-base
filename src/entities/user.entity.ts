@@ -23,4 +23,7 @@ export class User extends Base {
 
   @Column({ type: "enum", enum:Role, nullable: true })
   role?: Role;
+
+  @Column({nullable: true})
+  isVerified?: boolean;
 }

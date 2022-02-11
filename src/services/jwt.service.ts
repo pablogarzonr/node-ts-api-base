@@ -6,11 +6,11 @@ import { AuthInterface } from '@interfaces';
 
 @Service()
 export class JWTService {
-  async createJWT(user: User): Promise<string> {
+  async createJWT(tokenData: AuthInterface.ITokenDataInput): Promise<string> {
     return new Promise((resolve, reject) => {
       try {
         const token = jwt.sign(
-          { data: { userId: user.id, email: user.email } },
+          { data: { userId: tokenData.userId, email: tokenData.email } },
           JWT_SECRET || JWT_SECRET_DEFAULT,
           { expiresIn: ACCESS_TOKEN_LIFE || '6h' }
         );
