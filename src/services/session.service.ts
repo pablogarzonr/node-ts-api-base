@@ -92,7 +92,7 @@ export class SessionService {
       //update user as verified
       try {
         user.isVerified = true;
-        this.userService.editUser(user.id, user);
+        await this.userService.editUser(user.id, user);
       } catch(e) {
         throw new HttpError(
           HttpStatusCode.UNAUTHORIZED,
